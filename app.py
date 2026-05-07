@@ -94,6 +94,48 @@ y_lin = y_lin_full
 # Configuración de la página y cabecera
 # ──────────────────────────────────────────────────────────────────────────────
 st.set_page_config(page_title="CoolSpline - Dashboard", layout="wide")
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Sidebar — Panel de Control
+# ──────────────────────────────────────────────────────────────────────────────
+with st.sidebar:
+    st.markdown("""
+    <div style="background:#185FA5;border-radius:8px;padding:12px 16px;margin-bottom:18px">
+      <span style="color:white;font-size:18px;font-weight:bold">❄ CoolSpline</span><br>
+      <span style="color:#B5D4F4;font-size:11px">EcoData Solutions</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("### 🕐 Hora de consulta")
+    hora_decimal = st.slider("Hora (formato decimal)", 6.0, 24.0, 12.0, 1/60,
+                             label_visibility="collapsed")
+    total_mins = int(round(hora_decimal * 60))
+    hh = total_mins // 60
+    mm = total_mins % 60
+    if hh == 24 and mm > 0:
+        hh, mm = 24, 0
+    st.markdown(f"<p style='font-size:28px;font-weight:bold;color:#185FA5;margin-top:-8px'>"
+                f"{hh:02d}:{mm:02d}</p>", unsafe_allow_html=True)
+
+    st.divider()
+
+    st.markdown("### 🌡️ Umbral de temperatura")
+    umbral = st.slider("Umbral (°C)", 25.0, 34.0, 30.0, 0.5,
+                       label_visibility="collapsed")
+    st.caption(f"Umbral activo: **{umbral:.1f} °C**")
+
+    st.divider()
+
+    st.markdown("### 📈 Visualización")
+    mostrar_lineal = st.checkbox("Interpolación lineal", value=True)
+    mostrar_deriv  = st.checkbox("Derivada dT/dt", value=True)
+
+    st.divider()
+    st.caption("Control de temperatura en tiempo real · Gemelo Digital Térmico")
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Cabecera principal
+# ──────────────────────────────────────────────────────────────────────────────
 st.markdown("""
 <div style="background:#185FA5;border-radius:10px;padding:14px 20px;margin-bottom:20px">
   <span style="color:white;font-size:20px;font-weight:bold">❄ CoolSpline</span>
@@ -102,24 +144,6 @@ st.markdown("""
   </span>
 </div>
 """, unsafe_allow_html=True)
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Controles (sliders, checkboxes) 
-# ──────────────────────────────────────────────────────────────────────────────
-col_h, col_m = st.columns([4, 1])
-with col_h:
-    hora_decimal = st.slider("Hora (formato decimal)", 6.0, 24.0, 12.0, 1/60)
-with col_m:
-    total_mins = int(round(hora_decimal * 60))
-    hh = total_mins // 60
-    mm = total_mins % 60
-    if hh == 24 and mm > 0:
-        hh, mm = 24, 0
-    st.write(f"**{hh:02d}:{mm:02d}**")
-
-umbral = st.slider("Umbral de temperatura (°C)", 25.0, 34.0, 30.0, 0.5)
-mostrar_lineal = st.checkbox("Mostrar interpolación lineal", value=True)
-mostrar_deriv = st.checkbox("Mostrar derivada dT/dt", value=True)
 
 # Calcular temperatura y derivada para la hora seleccionada
 # AHORA EVALÚA USANDO t_train (los 864 nodos correctos)

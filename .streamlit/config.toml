@@ -1,22 +1,21 @@
 [theme]
 base                = "dark"
 
-# ── Paleta corporativa CoolSpline ──────────────────────────────────────────
-# Azul cian tecnológico como color de acento principal
-primaryColor        = "#00C6FF"
+# ── Paleta Clean & Modern SaaS ─────────────────────────────────────────────
+# Acento: blanco puro para máxima legibilidad sobre fondo oscuro
+primaryColor        = "#FFFFFF"
 
-# Fondo principal: azul marino oscuro (no negro puro → más sofisticado)
-backgroundColor     = "#0D1B2A"
+# Fondo principal: gris carbón oscuro (Streamlit default dark, elevado)
+backgroundColor     = "#0E1117"
 
-# Fondo de componentes (sidebar, cards, inputs): un tono ligeramente más claro
-secondaryBackgroundColor = "#112336"
+# Sidebar e inputs: gris ligeramente más claro
+secondaryBackgroundColor = "#1E1E1E"
 
-# Texto blanco suave (no puro, reduce fatiga visual)
-textColor           = "#E8F0F7"
+# Texto: blanco suave
+textColor           = "#E8EAF0"
 
-# Fuente limpia y corporativa
+# Fuente del sistema — Inter via CSS override
 font                = "sans serif"
 
 [server]
-# Evita que abra el browser automáticamente al hacer deploy en Cloud
 headless            = true

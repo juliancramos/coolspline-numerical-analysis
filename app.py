@@ -102,64 +102,60 @@ st.set_page_config(page_title="CoolSpline - Dashboard", layout="wide")
 st.markdown("""
 <style>
 /* ── Fuente corporativa ── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
 
-/* ── Fondo general ── */
-.stApp { background-color: #0D1B2A; }
+/* ── Fondo general: gris carbón ── */
+.stApp { background-color: #0E1117; }
 
-/* ── Sidebar ── */
+/* ── Sidebar: gris muy oscuro ── */
 [data-testid="stSidebar"] {
-    background-color: #081420 !important;
-    border-right: 1px solid #1E3A52;
+    background-color: #161B22 !important;
+    border-right: 1px solid rgba(255,255,255,0.06);
 }
 
 /* ── Tarjetas de métrica (st.metric) ── */
 [data-testid="stMetric"] {
-    background: linear-gradient(135deg, #112336 0%, #0D1B2A 100%);
-    border: 1px solid #1E4D6B;
-    border-radius: 12px;
-    padding: 18px 22px 14px 22px;
-    box-shadow: 0 4px 20px rgba(0, 198, 255, 0.07),
-                inset 0 1px 0 rgba(255,255,255,0.04);
-    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+    background: #1E1E1E;
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 14px;
+    padding: 20px 24px 16px 24px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 [data-testid="stMetric"]:hover {
-    border-color: #00C6FF;
-    box-shadow: 0 6px 28px rgba(0, 198, 255, 0.18);
+    border-color: rgba(255,255,255,0.18);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.55);
 }
-/* Label de la tarjeta */
+/* Label */
 [data-testid="stMetricLabel"] > div {
-    color: #7BBDD4 !important;
-    font-size: 0.72rem !important;
+    color: #9CA3AF !important;
+    font-size: 0.70rem !important;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.10em;
     text-transform: uppercase;
 }
-/* Valor principal de la tarjeta */
+/* Valor */
 [data-testid="stMetricValue"] > div {
-    color: #00C6FF !important;
-    font-size: 1.65rem !important;
+    color: #F9FAFB !important;
+    font-size: 1.75rem !important;
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
 }
 /* Delta */
 [data-testid="stMetricDelta"] > div {
-    color: #3CE87A !important;
+    color: #34D399 !important;
     font-size: 0.75rem !important;
 }
 
-/* ── Línea divisoria del sidebar ── */
-[data-testid="stSidebar"] hr { border-color: #1E3A52; }
+/* ── Divisor sidebar ── */
+[data-testid="stSidebar"] hr { border-color: rgba(255,255,255,0.07); }
 
 /* ── Sliders ── */
-[data-testid="stSlider"] [role="slider"] { background-color: #00C6FF; }
+[data-testid="stSlider"] [role="slider"] { background-color: #FFFFFF; }
 
-/* ── Checkboxes ── */
-[data-testid="stCheckbox"] span { color: #E8F0F7; }
-
-/* ── Alertas / banners ── */
-[data-testid="stAlert"] { border-radius: 8px; }
+/* ── Alertas ── */
+[data-testid="stAlert"] { border-radius: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -254,26 +250,32 @@ with col1:
     fig_gauge_temp = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=temp,
-        number={"suffix": " °C", "font": {"size": 28, "color": "#00C6FF"}},
-        delta={"reference": umbral, "increasing": {"color": "#FF4B5C"},
-               "decreasing": {"color": "#3CE87A"}, "suffix": " °C"},
-        title={"text": "Temperatura Actual",
-               "font": {"size": 13, "color": "#7BBDD4"}},
+        number={"suffix": " °C",
+                "font": {"size": 44, "color": "#F9FAFB", "family": "Inter, sans-serif"}},
+        delta={"reference": umbral,
+               "increasing": {"color": "#F87171"},
+               "decreasing": {"color": "#34D399"},
+               "suffix": " °C",
+               "font": {"size": 14}},
+        title={"text": "TEMPERATURA ACTUAL",
+               "font": {"size": 11, "color": "#9CA3AF", "family": "Inter, sans-serif"}},
         gauge={
             "axis": {"range": [18, 36],
-                     "tickcolor": "#4A9BBF",
-                     "tickfont": {"color": "#7BBDD4", "size": 10}},
-            "bar": {"color": "#00C6FF", "thickness": 0.25},
+                     "tickcolor": "rgba(255,255,255,0.2)",
+                     "tickfont": {"color": "rgba(255,255,255,0.4)", "size": 10},
+                     "tickwidth": 1,
+                     "dtick": 4},
+            "bar": {"color": "#F9FAFB", "thickness": 0.12},
             "bgcolor": "rgba(0,0,0,0)",
             "borderwidth": 0,
             "steps": [
-                {"range": [18, 25], "color": "rgba(60,232,122,0.15)"},
-                {"range": [25, 30], "color": "rgba(255,193,7,0.15)"},
-                {"range": [30, 36], "color": "rgba(255,75,92,0.15)"},
+                {"range": [18, 25], "color": "rgba(52,211,153,0.10)"},
+                {"range": [25, 30], "color": "rgba(251,191,36,0.10)"},
+                {"range": [30, 36], "color": "rgba(248,113,113,0.12)"},
             ],
             "threshold": {
-                "line": {"color": "#FF4B5C", "width": 2},
-                "thickness": 0.75,
+                "line": {"color": "#F87171", "width": 2},
+                "thickness": 0.6,
                 "value": 32,
             },
         },
@@ -282,38 +284,40 @@ with col1:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={"family": "Inter, sans-serif"},
-        margin=dict(t=40, b=10, l=20, r=20),
-        height=220,
+        margin=dict(t=30, b=0, l=10, r=10),
+        height=260,
     )
     st.plotly_chart(fig_gauge_temp, use_container_width=True)
 
 # ── Gauge: Velocidad de cambio ─────────────────────────────────────────────
 with col2:
     max_rate = 0.6
+    bar_color = "#34D399" if abs(deriv) <= 0.3 else "#F87171"
     fig_gauge_der = go.Figure(go.Indicator(
         mode="gauge+number",
         value=round(deriv, 4),
-        number={"suffix": " °C/min", "font": {"size": 24, "color": "#00C6FF"},
+        number={"suffix": " °C/min",
+                "font": {"size": 36, "color": "#F9FAFB", "family": "Inter, sans-serif"},
                 "valueformat": "+.4f"},
-        title={"text": "Velocidad de Cambio dT/dt",
-               "font": {"size": 13, "color": "#7BBDD4"}},
+        title={"text": "VELOCIDAD dT/dt",
+               "font": {"size": 11, "color": "#9CA3AF", "family": "Inter, sans-serif"}},
         gauge={
             "axis": {"range": [-max_rate, max_rate],
-                     "tickcolor": "#4A9BBF",
-                     "tickfont": {"color": "#7BBDD4", "size": 10},
+                     "tickcolor": "rgba(255,255,255,0.2)",
+                     "tickfont": {"color": "rgba(255,255,255,0.4)", "size": 10},
+                     "tickwidth": 1,
                      "dtick": 0.2},
-            "bar": {"color": "#3CE87A" if abs(deriv) <= 0.3 else "#FF4B5C",
-                    "thickness": 0.25},
+            "bar": {"color": bar_color, "thickness": 0.12},
             "bgcolor": "rgba(0,0,0,0)",
             "borderwidth": 0,
             "steps": [
-                {"range": [-max_rate, -0.3], "color": "rgba(255,75,92,0.15)"},
-                {"range": [-0.3,  0.3],     "color": "rgba(60,232,122,0.15)"},
-                {"range": [0.3,  max_rate], "color": "rgba(255,75,92,0.15)"},
+                {"range": [-max_rate, -0.3], "color": "rgba(248,113,113,0.10)"},
+                {"range": [-0.3,  0.3],     "color": "rgba(52,211,153,0.08)"},
+                {"range": [0.3,  max_rate], "color": "rgba(248,113,113,0.10)"},
             ],
             "threshold": {
-                "line": {"color": "#FFD700", "width": 2},
-                "thickness": 0.75,
+                "line": {"color": "#FBBF24", "width": 2},
+                "thickness": 0.6,
                 "value": 0.3,
             },
         },
@@ -322,8 +326,8 @@ with col2:
         paper_bgcolor="rgba(0,0,0,0)",
         plot_bgcolor="rgba(0,0,0,0)",
         font={"family": "Inter, sans-serif"},
-        margin=dict(t=40, b=10, l=20, r=20),
-        height=220,
+        margin=dict(t=30, b=0, l=10, r=10),
+        height=260,
     )
     st.plotly_chart(fig_gauge_der, use_container_width=True)
 
@@ -479,44 +483,45 @@ if mostrar_deriv:
                        line=dict(color="rgba(150,150,150,0.3)", width=0.8))
 
     fig_main.update_yaxes(title_text="dT/dt (°C/min)",
-                          title_font=dict(color="#7BBDD4", size=11),
-                          tickfont=dict(color="#7BBDD4"),
-                          gridcolor="rgba(30,58,82,0.6)",
-                          zerolinecolor="rgba(30,58,82,0.6)",
+                          title_font=dict(color="#9CA3AF", size=13),
+                          tickfont=dict(color="#9CA3AF", size=12),
+                          gridcolor="rgba(255,255,255,0.04)",
+                          zerolinecolor="rgba(255,255,255,0.08)",
                           row=2, col=1)
 
 # ── Estilo global de la figura ────────────────────────────────────────────
 fig_main.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(13,27,42,0.6)",
-    font=dict(family="Inter, sans-serif", color="#E8F0F7"),
+    plot_bgcolor="rgba(255,255,255,0.025)",   # gris ultra-sutil
+    font=dict(family="Inter, sans-serif", color="#E8EAF0", size=13),
     legend=dict(
-        bgcolor="rgba(8,20,32,0.85)",
-        bordercolor="#1E4D6B",
+        bgcolor="rgba(14,17,23,0.80)",
+        bordercolor="rgba(255,255,255,0.08)",
         borderwidth=1,
-        font=dict(size=11, color="#E8F0F7"),
+        font=dict(size=13, color="#E8EAF0"),
     ),
     hovermode="x unified",
-    margin=dict(t=40, b=10, l=10, r=10),
-    height=520 if mostrar_deriv else 360,
+    margin=dict(t=50, b=20, l=10, r=10),
+    height=750 if mostrar_deriv else 450,
 )
 fig_main.update_xaxes(
-    tickfont=dict(color="#7BBDD4"),
-    gridcolor="rgba(30,58,82,0.6)",
+    tickfont=dict(color="#9CA3AF", size=12),
+    gridcolor="rgba(255,255,255,0.04)",
     showgrid=True,
     tickangle=-30,
     dtick=int(len(horas_label) / 9),   # ~2 h entre ticks
 )
 fig_main.update_yaxes(
     title_text="Temperatura (°C)",
-    title_font=dict(color="#7BBDD4", size=11),
-    tickfont=dict(color="#7BBDD4"),
-    gridcolor="rgba(30,58,82,0.6)",
-    zerolinecolor="rgba(30,58,82,0.6)",
+    title_font=dict(color="#9CA3AF", size=13),
+    tickfont=dict(color="#9CA3AF", size=12),
+    gridcolor="rgba(255,255,255,0.04)",
+    zerolinecolor="rgba(255,255,255,0.06)",
     range=[19, 35],
     row=1, col=1,
 )
 for ann in fig_main.layout.annotations:
-    ann.font.color = "#7BBDD4"
+    ann.font.color = "#9CA3AF"
+    ann.font.size  = 13
 
 st.plotly_chart(fig_main, use_container_width=True)

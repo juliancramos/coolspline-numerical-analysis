@@ -363,7 +363,7 @@ col_alerta, col_eta = st.columns([3, 1])
 
 with col_alerta:
     if temp > 32:
-        st.error("🚨 ALARMA CRÍTICA — T > 32°C. Activar protocolo de emergencia.")
+        st.error("ALARMA CRÍTICA — T > 32°C. Activar protocolo de emergencia.")
         st.toast("🚨 ALARMA CRÍTICA: temperatura sobre 32°C.", icon="🚨")
     elif temp > umbral:
         st.warning(f"Ventiladores ON — T={temp:.2f}°C supera umbral de {umbral:.1f}°C.")
@@ -568,61 +568,66 @@ st.plotly_chart(fig_main, use_container_width=True)
 # Mapa de Calor Térmico 24h (Heatmap 1D)
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown(
-    "<p style='font-size:11px;color:#9CA3AF;letter-spacing:0.10em;"
-    "text-transform:uppercase;margin-bottom:2px'>&#127777; Perfil Térmico 24h</p>",
+    "<p style='font-size:13px;font-weight:600;color:#9CA3AF;letter-spacing:0.10em;"
+    "text-transform:uppercase;margin-top:12px;margin-bottom:4px'>&#127777;&nbsp; Perfil Térmico 24h</p>",
     unsafe_allow_html=True,
 )
 
+# Ticks numéricos cada 2 horas → texto HH:MM
+_heat_tickvals = list(range(6, 25, 2))
+_heat_ticktext = [f"{h:02d}:00" for h in _heat_tickvals]
+
+# La clave del fix: eje X numerico (t_fino) para que Plotly
+# renderice la banda de color continua correctamente
 fig_heat = go.Figure(go.Heatmap(
-    z=[y_sp],                       # 1 fila × N columnas
-    x=horas_label,
-    y=[""],                          # eje Y vacío (banda horizontal)
-    colorscale=[
-        [0.00, "#1E3A5F"],           # fresco
-        [0.30, "#1D7EC4"],
-        [0.55, "#F4D03F"],           # umbral
-        [0.75, "#E67E22"],
-        [1.00, "#C0392B"],           # crítico
-    ],
+    z=[y_sp.tolist()],           # 1 fila × 1081 columnas
+    x=t_fino.tolist(),           # eje X numérico (horas decimales)
+    y=[""],                      # eje Y: una sola fila invisible
+    colorscale="Turbo",
     zmin=19, zmax=35,
     showscale=True,
     colorbar=dict(
-        title=dict(text="°C", font=dict(color="#9CA3AF", size=11)),
-        thickness=10,
-        len=0.9,
-        tickfont=dict(color="#9CA3AF", size=10),
+        title=dict(
+            text="°C",
+            font=dict(color="#E8EAF0", size=13),
+            side="right",
+        ),
+        thickness=20,
+        lenmode="fraction",
+        len=0.95,
+        tickfont=dict(color="#E8EAF0", size=12),
         tickvals=[20, 25, 30, 32, 35],
+        ticktext=["20°", "25°", "30°", "32°", "35°"],
         outlinewidth=0,
+        bgcolor="rgba(0,0,0,0)",
+        x=1.02,
     ),
-    hovertemplate="<b>%{x}</b><br>T = %{z:.2f} °C<extra></extra>",
+    hovertemplate="<b>%{x:.2f}h</b><br>T = %{z:.2f} °C<extra></extra>",
 ))
 
-# Marcador de hora actual sobre el heatmap
+# Marcador vertical en la hora actual (valor decimal numérico)
 fig_heat.add_vline(
-    x=f"{hh:02d}:{mm:02d}",
-    line=dict(color="rgba(255,255,255,0.70)", width=2, dash="dot"),
-)
-
-# Líneas de umbral y alarma sobre el heatmap
-fig_heat.add_shape(
-    type="line",
-    x0=0, x1=1, xref="paper",
-    y0=0, y1=0, yref="paper",
-    line=dict(color="rgba(0,0,0,0)"),    # placeholder invisible
+    x=hora_decimal,
+    line=dict(color="rgba(255,255,255,0.85)", width=2.5, dash="dot"),
+    annotation_text=f"{hh:02d}:{mm:02d}",
+    annotation_font=dict(color="white", size=13, family="Inter, sans-serif"),
+    annotation_position="top left",
 )
 
 fig_heat.update_layout(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(0,0,0,0)",
     font=dict(family="Inter, sans-serif", color="#E8EAF0"),
-    margin=dict(t=8, b=30, l=10, r=60),
-    height=80,
+    margin=dict(t=50, b=55, l=20, r=90),
+    height=280,
     xaxis=dict(
-        tickfont=dict(color="#9CA3AF", size=11),
-        gridcolor="rgba(255,255,255,0.03)",
-        showgrid=True,
-        tickangle=-30,
-        dtick=int(len(horas_label) / 9),
+        range=[6.0, 24.0],
+        tickvals=_heat_tickvals,
+        ticktext=_heat_ticktext,
+        tickfont=dict(color="#E8EAF0", size=15),
+        title=dict(text="Hora del día", font=dict(color="#9CA3AF", size=13)),
+        showgrid=False,
+        zeroline=False,
     ),
     yaxis=dict(
         showticklabels=False,

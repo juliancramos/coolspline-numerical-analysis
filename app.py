@@ -340,17 +340,55 @@ with col4:
               delta="Modelo validado")
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Mensaje de alarma / estado
+# Métrica predictiva + Alertas dinámicas (Toast)
 # ──────────────────────────────────────────────────────────────────────────────
-if temp > 32:
-    st.error("ALARMA CRÍTICA — T > 32°C. Activar protocolo de emergencia.")
-elif temp > umbral:
-    st.warning(f"Ventiladores ON — T={temp:.2f}°C supera umbral de {umbral:.1f}°C.")
-elif abs(deriv) > 0.3:
-    signo = "+" if deriv > 0 else ""
-    st.warning(f"Cambio rápido — dT/dt = {signo}{deriv:.4f} °C/min")
+
+# ── Cálculo de tiempo estimado al umbral crítico (30°C) ───────────────────
+_TEMP_CRITICA = 30.0
+if temp < _TEMP_CRITICA and deriv > 0:
+    minutos_restantes = (_TEMP_CRITICA - temp) / deriv
+    hh_eta = int(hora_decimal + minutos_restantes / 60)
+    mm_eta = int(round(((hora_decimal + minutos_restantes / 60) % 1) * 60))
+    if mm_eta == 60:
+        hh_eta += 1; mm_eta = 0
+    eta_str = f"{minutos_restantes:.0f} min  (≈{hh_eta:02d}:{mm_eta:02d})"
+    eta_delta = f"T→{_TEMP_CRITICA:.0f}°C a esa tasa"
 else:
-    st.success("Sistema normal")
+    eta_str  = None
+    eta_delta = None
+
+# ── Fila de estado: alerta principal + métrica ETA ──────────────────────────
+st.markdown("")
+col_alerta, col_eta = st.columns([3, 1])
+
+with col_alerta:
+    if temp > 32:
+        st.error("🚨 ALARMA CRÍTICA — T > 32°C. Activar protocolo de emergencia.")
+        st.toast("🚨 ALARMA CRÍTICA: temperatura sobre 32°C.", icon="🚨")
+    elif temp > umbral:
+        st.warning(f"Ventiladores ON — T={temp:.2f}°C supera umbral de {umbral:.1f}°C.")
+        st.toast(f"Temperatura {temp:.2f}°C > umbral {umbral:.1f}°C", icon="⚠️")
+    elif abs(deriv) > 0.3:
+        signo = "+" if deriv > 0 else ""
+        st.warning(f"Cambio rápido — dT/dt = {signo}{deriv:.4f} °C/min")
+        st.toast(f"Tasa de cambio elevada: {signo}{deriv:.4f} °C/min", icon="📈")
+    else:
+        st.success("Sistema en estado normal")
+
+with col_eta:
+    if eta_str is not None:
+        st.metric(
+            label="⏱ ETA → 30°C",
+            value=eta_str,
+            delta=eta_delta,
+            delta_color="inverse",
+        )
+    else:
+        if temp >= _TEMP_CRITICA:
+            st.metric(label="⏱ ETA → 30°C", value="Ya superado", delta="T≥ 30°C")
+        else:
+            st.metric(label="⏱ ETA → 30°C", value="Enfriando",
+                      delta="dT/dt ≤ 0", delta_color="off")
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Gráfica principal interactiva (Plotly)
@@ -525,3 +563,72 @@ for ann in fig_main.layout.annotations:
     ann.font.size  = 13
 
 st.plotly_chart(fig_main, use_container_width=True)
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Mapa de Calor Térmico 24h (Heatmap 1D)
+# ──────────────────────────────────────────────────────────────────────────────
+st.markdown(
+    "<p style='font-size:11px;color:#9CA3AF;letter-spacing:0.10em;"
+    "text-transform:uppercase;margin-bottom:2px'>&#127777; Perfil Térmico 24h</p>",
+    unsafe_allow_html=True,
+)
+
+fig_heat = go.Figure(go.Heatmap(
+    z=[y_sp],                       # 1 fila × N columnas
+    x=horas_label,
+    y=[""],                          # eje Y vacío (banda horizontal)
+    colorscale=[
+        [0.00, "#1E3A5F"],           # fresco
+        [0.30, "#1D7EC4"],
+        [0.55, "#F4D03F"],           # umbral
+        [0.75, "#E67E22"],
+        [1.00, "#C0392B"],           # crítico
+    ],
+    zmin=19, zmax=35,
+    showscale=True,
+    colorbar=dict(
+        title=dict(text="°C", font=dict(color="#9CA3AF", size=11)),
+        thickness=10,
+        len=0.9,
+        tickfont=dict(color="#9CA3AF", size=10),
+        tickvals=[20, 25, 30, 32, 35],
+        outlinewidth=0,
+    ),
+    hovertemplate="<b>%{x}</b><br>T = %{z:.2f} °C<extra></extra>",
+))
+
+# Marcador de hora actual sobre el heatmap
+fig_heat.add_vline(
+    x=f"{hh:02d}:{mm:02d}",
+    line=dict(color="rgba(255,255,255,0.70)", width=2, dash="dot"),
+)
+
+# Líneas de umbral y alarma sobre el heatmap
+fig_heat.add_shape(
+    type="line",
+    x0=0, x1=1, xref="paper",
+    y0=0, y1=0, yref="paper",
+    line=dict(color="rgba(0,0,0,0)"),    # placeholder invisible
+)
+
+fig_heat.update_layout(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Inter, sans-serif", color="#E8EAF0"),
+    margin=dict(t=8, b=30, l=10, r=60),
+    height=80,
+    xaxis=dict(
+        tickfont=dict(color="#9CA3AF", size=11),
+        gridcolor="rgba(255,255,255,0.03)",
+        showgrid=True,
+        tickangle=-30,
+        dtick=int(len(horas_label) / 9),
+    ),
+    yaxis=dict(
+        showticklabels=False,
+        showgrid=False,
+        zeroline=False,
+    ),
+)
+
+st.plotly_chart(fig_heat, use_container_width=True)

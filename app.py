@@ -20,17 +20,38 @@ def trazadores_cubicos_naturales(x_in, y_in, verbose=False):
         h[j] = x_in[j+1] - x_in[j]
     c = np.zeros(n+1)
     if n > 1:
-        A = np.zeros((n-1, n-1))
-        B = np.zeros(n-1)
-        for i in range(1, n):
-            row = i-1
-            if i-1 > 0:
-                A[row, row-1] = h[i-1]
-            A[row, row] = 2*(h[i-1]+h[i])
-            if i+1 < n:
-                A[row, row+1] = h[i]
-            B[row] = (3/h[i])*(a[i+1]-a[i]) - (3/h[i-1])*(a[i]-a[i-1])
-        c[1:n] = np.linalg.solve(A, B)
+        m = n - 1           # tamaño del sistema tridiagonal (nodos interiores)
+
+        # ── Diagonales del sistema tridiagonal ──────────────────────────────────
+        # sub-diagonal  (longitud m-1): h[1], ..., h[m-1]
+        sub  = np.array([h[i]            for i in range(1, m)],  dtype=float)
+        # diagonal principal (longitud m): 2*(h[i-1]+h[i])  i=1..m
+        diag = np.array([2*(h[i-1]+h[i]) for i in range(1, n)], dtype=float)
+        # super-diagonal (longitud m-1): h[1], ..., h[m-1]
+        sup  = np.array([h[i]            for i in range(1, m)],  dtype=float)
+        # término independiente
+        rhs  = np.array(
+            [(3/h[i])*(a[i+1]-a[i]) - (3/h[i-1])*(a[i]-a[i-1])
+             for i in range(1, n)],
+            dtype=float,
+        )
+
+        # ── Algoritmo de Thomas (TDMA) — O(N), numéricamente estable ──────────
+        # Eliminación hacia adelante (forward sweep)
+        diag_ = diag.copy()
+        rhs_  = rhs.copy()
+        for k in range(1, m):
+            w         = sub[k-1] / diag_[k-1]
+            diag_[k] -= w * sup[k-1]
+            rhs_[k]  -= w * rhs_[k-1]
+
+        # Sustitución hacia atrás (back substitution)
+        c_inner       = np.empty(m)
+        c_inner[m-1]  = rhs_[m-1] / diag_[m-1]
+        for k in range(m-2, -1, -1):
+            c_inner[k] = (rhs_[k] - sup[k] * c_inner[k+1]) / diag_[k]
+
+        c[1:n] = c_inner     # c[0] = c[n] = 0  (condición natural)
     b = np.zeros(n)
     d = np.zeros(n)
     for j in range(n):
@@ -39,11 +60,20 @@ def trazadores_cubicos_naturales(x_in, y_in, verbose=False):
     return a, b, c, d, h
 
 def _tramo(x_nodos, xq):
+    """Devuelve el índice del tramo j tal que x_nodos[j] <= xq < x_nodos[j+1].
+    Usa np.searchsorted (O(log N)) con clamp en las fronteras para evitar
+    extrapolación cuando xq está fuera del dominio de entrenamiento.
+    """
     n = len(x_nodos) - 1
-    for i in range(n-1):
-        if x_nodos[i] <= xq < x_nodos[i+1]:
-            return i
-    return n-1
+    # Clamp: fuera del dominio → primer o último tramo válido
+    if xq <= x_nodos[0]:
+        return 0
+    if xq >= x_nodos[-1]:
+        return n - 1
+    # searchsorted devuelve el primer índice i con x_nodos[i] > xq
+    # por tanto el tramo correcto es i-1
+    i = np.searchsorted(x_nodos, xq, side='right')
+    return int(i) - 1
 
 def evaluar_spline(x_nodos, a, b, c, d, xq):
     j = _tramo(x_nodos, xq)
@@ -72,11 +102,17 @@ t_fino = np.arange(6.0, 24.0 + paso_minuto, paso_minuto)
 y_lin_full = np.interp(t_fino, x, y)
 
 # 2. Hold-out sistemático (20% prueba, 80% entrenamiento)
-idx_test = np.arange(0, len(t_fino), 5)
-idx_train = np.setdiff1d(np.arange(len(t_fino)), idx_test)
+#    Los extremos del dominio (idx 0 y N-1) se anclan siempre en train
+#    para garantizar interpolación estricta y evitar extrapolación.
+idx_todos = np.arange(len(t_fino))
+idx_test_raw = np.arange(0, len(t_fino), 5)           # cada 5 → ~20 %
+# Excluir primer y último índice del set de prueba
+idx_test  = idx_test_raw[(idx_test_raw != 0) &
+                          (idx_test_raw != len(t_fino) - 1)]
+idx_train = np.setdiff1d(idx_todos, idx_test)
 
 t_train, y_train = t_fino[idx_train], y_lin_full[idx_train]
-t_test, y_test = t_fino[idx_test], y_lin_full[idx_test]
+t_test,  y_test  = t_fino[idx_test],  y_lin_full[idx_test]
 
 # 3. Entrenar spline masivo con los 864 puntos (t_train)
 a_sp, b_sp, c_sp, d_sp, _ = trazadores_cubicos_naturales(t_train, y_train, verbose=False)

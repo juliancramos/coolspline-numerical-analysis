@@ -96,13 +96,83 @@ y_lin = y_lin_full
 st.set_page_config(page_title="CoolSpline - Dashboard", layout="wide")
 
 # ──────────────────────────────────────────────────────────────────────────────
+# CSS Global — Dark Mode & Metric Cards
+# ──────────────────────────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* ── Fuente corporativa ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+
+/* ── Fondo general ── */
+.stApp { background-color: #0D1B2A; }
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {
+    background-color: #081420 !important;
+    border-right: 1px solid #1E3A52;
+}
+
+/* ── Tarjetas de métrica (st.metric) ── */
+[data-testid="stMetric"] {
+    background: linear-gradient(135deg, #112336 0%, #0D1B2A 100%);
+    border: 1px solid #1E4D6B;
+    border-radius: 12px;
+    padding: 18px 22px 14px 22px;
+    box-shadow: 0 4px 20px rgba(0, 198, 255, 0.07),
+                inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+[data-testid="stMetric"]:hover {
+    border-color: #00C6FF;
+    box-shadow: 0 6px 28px rgba(0, 198, 255, 0.18);
+}
+/* Label de la tarjeta */
+[data-testid="stMetricLabel"] > div {
+    color: #7BBDD4 !important;
+    font-size: 0.72rem !important;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+/* Valor principal de la tarjeta */
+[data-testid="stMetricValue"] > div {
+    color: #00C6FF !important;
+    font-size: 1.65rem !important;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+/* Delta */
+[data-testid="stMetricDelta"] > div {
+    color: #3CE87A !important;
+    font-size: 0.75rem !important;
+}
+
+/* ── Línea divisoria del sidebar ── */
+[data-testid="stSidebar"] hr { border-color: #1E3A52; }
+
+/* ── Sliders ── */
+[data-testid="stSlider"] [role="slider"] { background-color: #00C6FF; }
+
+/* ── Checkboxes ── */
+[data-testid="stCheckbox"] span { color: #E8F0F7; }
+
+/* ── Alertas / banners ── */
+[data-testid="stAlert"] { border-radius: 8px; }
+</style>
+""", unsafe_allow_html=True)
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # Sidebar — Panel de Control
 # ──────────────────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.markdown("""
-    <div style="background:#185FA5;border-radius:8px;padding:12px 16px;margin-bottom:18px">
-      <span style="color:white;font-size:18px;font-weight:bold">❄ CoolSpline</span><br>
-      <span style="color:#B5D4F4;font-size:11px">EcoData Solutions</span>
+    <div style="background:linear-gradient(135deg,#0A2744 0%,#0D3A5C 100%);
+                border:1px solid #1E4D6B;border-radius:10px;
+                padding:14px 18px;margin-bottom:20px">
+      <span style="color:#00C6FF;font-size:20px;font-weight:700;letter-spacing:-0.02em">❄ CoolSpline</span><br>
+      <span style="color:#7BBDD4;font-size:10px;letter-spacing:0.12em;text-transform:uppercase">EcoData Solutions</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -137,11 +207,26 @@ with st.sidebar:
 # Cabecera principal
 # ──────────────────────────────────────────────────────────────────────────────
 st.markdown("""
-<div style="background:#185FA5;border-radius:10px;padding:14px 20px;margin-bottom:20px">
-  <span style="color:white;font-size:20px;font-weight:bold">❄ CoolSpline</span>
-  <span style="color:#B5D4F4;font-size:13px;margin-left:12px">
-    EcoData Solutions — Control de temperatura en tiempo real
-  </span>
+<div style="
+  background: linear-gradient(135deg, #061626 0%, #0A2744 60%, #0D3A5C 100%);
+  border: 1px solid #1E4D6B;
+  border-radius: 14px;
+  padding: 18px 28px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 8px 32px rgba(0,198,255,0.10);
+">
+  <span style="font-size:30px">❄</span>
+  <div>
+    <span style="color:#00C6FF;font-size:22px;font-weight:700;letter-spacing:-0.03em;
+                 font-family:'Inter',sans-serif">CoolSpline</span>
+    <span style="color:#4A9BBF;font-size:13px;margin-left:10px;font-weight:300">by EcoData Solutions</span><br>
+    <span style="color:#7BBDD4;font-size:11px;letter-spacing:0.10em;text-transform:uppercase">
+      Gemelo Digital Térmico &nbsp;·&nbsp; Data Center Thermal Monitor
+    </span>
+  </div>
 </div>
 """, unsafe_allow_html=True)
 

@@ -1,0 +1,22 @@
+[theme]
+base                = "dark"
+
+# ── Paleta corporativa CoolSpline ──────────────────────────────────────────
+# Azul cian tecnológico como color de acento principal
+primaryColor        = "#00C6FF"
+
+# Fondo principal: azul marino oscuro (no negro puro → más sofisticado)
+backgroundColor     = "#0D1B2A"
+
+# Fondo de componentes (sidebar, cards, inputs): un tono ligeramente más claro
+secondaryBackgroundColor = "#112336"
+
+# Texto blanco suave (no puro, reduce fatiga visual)
+textColor           = "#E8F0F7"
+
+# Fuente limpia y corporativa
+font                = "sans serif"
+
+[server]
+# Evita que abra el browser automáticamente al hacer deploy en Cloud
+headless            = true

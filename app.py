@@ -269,7 +269,7 @@ temp = evaluar_spline(t_train, a_sp, b_sp, c_sp, d_sp, hora_decimal)
 deriv = derivada_spline(t_train, b_sp, c_sp, d_sp, hora_decimal)
 
 # ──────────────────────────────────────────────────────────────────────────────
-# Fila superior: Gauge charts + métricas de texto
+# Pre-cómputo de métricas para el dashboard
 # ──────────────────────────────────────────────────────────────────────────────
 idx_max = np.argmax(y_sp)
 hora_max = t_fino[idx_max]
@@ -279,10 +279,59 @@ if mm_max == 60:
     hh_max += 1
     mm_max = 0
 
-col1, col2, col3, col4 = st.columns([2, 2, 1.5, 1.5])
+_TEMP_CRITICA = 30.0
+if temp < _TEMP_CRITICA and deriv > 0:
+    minutos_restantes = (_TEMP_CRITICA - temp) / deriv
+    hh_eta = int(hora_decimal + minutos_restantes / 60)
+    mm_eta = int(round(((hora_decimal + minutos_restantes / 60) % 1) * 60))
+    if mm_eta == 60:
+        hh_eta += 1; mm_eta = 0
+    eta_str   = f"{minutos_restantes:.0f} min  (≈{hh_eta:02d}:{mm_eta:02d})"
+    eta_delta = f"T→{_TEMP_CRITICA:.0f}°C a esa tasa"
+else:
+    eta_str   = None
+    eta_delta = None
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FILA 1 — Métricas KPI (3 columnas)
+# ══════════════════════════════════════════════════════════════════════════════
+kpi1, kpi2, kpi3 = st.columns(3)
+
+with kpi1:
+    st.metric(
+        label="🌡️ Temp. Máxima del Día",
+        value=f"{y_sp[idx_max]:.2f} °C",
+        delta=f"a las {hh_max:02d}:{mm_max:02d}",
+    )
+
+with kpi2:
+    st.metric(
+        label="📐 Margen de Error Predictivo",
+        value=f"{rmse_sp:.4f} °C",
+        delta="Modelo validado · RMSE spline",
+    )
+
+with kpi3:
+    if eta_str is not None:
+        st.metric(
+            label="⏱ Tiempo Crítico Restante",
+            value=eta_str,
+            delta=eta_delta,
+            delta_color="inverse",
+        )
+    elif temp >= _TEMP_CRITICA:
+        st.metric(label="⏱ Tiempo Crítico Restante", value="Ya superado", delta="T ≥ 30 °C")
+    else:
+        st.metric(label="⏱ Tiempo Crítico Restante", value="Enfriando",
+                  delta="dT/dt ≤ 0", delta_color="off")
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FILA 2 — Gauge charts (2 columnas centradas)
+# ══════════════════════════════════════════════════════════════════════════════
+gauge1, gauge2 = st.columns(2)
 
 # ── Gauge: Temperatura actual ──────────────────────────────────────────────
-with col1:
+with gauge1:
     fig_gauge_temp = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=temp,
@@ -326,8 +375,8 @@ with col1:
     st.plotly_chart(fig_gauge_temp, use_container_width=True)
 
 # ── Gauge: Velocidad de cambio ─────────────────────────────────────────────
-with col2:
-    max_rate = 0.6
+with gauge2:
+    max_rate  = 0.6
     bar_color = "#34D399" if abs(deriv) <= 0.3 else "#F87171"
     fig_gauge_der = go.Figure(go.Indicator(
         mode="gauge+number",
@@ -367,64 +416,21 @@ with col2:
     )
     st.plotly_chart(fig_gauge_der, use_container_width=True)
 
-# ── Métricas de texto: Máxima del día y RMSE ──────────────────────────────
-with col3:
-    st.metric("Temp. máxima del día", f"{y_sp[idx_max]:.2f} °C",
-              delta=f"a las {hh_max:02d}:{mm_max:02d}")
-with col4:
-    st.metric("RMSE Spline / Lineal", f"{rmse_sp:.4f} / {rmse_ln:.4f}",
-              delta="Modelo validado")
-
-# ──────────────────────────────────────────────────────────────────────────────
-# Métrica predictiva + Alertas dinámicas (Toast)
-# ──────────────────────────────────────────────────────────────────────────────
-
-# ── Cálculo de tiempo estimado al umbral crítico (30°C) ───────────────────
-_TEMP_CRITICA = 30.0
-if temp < _TEMP_CRITICA and deriv > 0:
-    minutos_restantes = (_TEMP_CRITICA - temp) / deriv
-    hh_eta = int(hora_decimal + minutos_restantes / 60)
-    mm_eta = int(round(((hora_decimal + minutos_restantes / 60) % 1) * 60))
-    if mm_eta == 60:
-        hh_eta += 1; mm_eta = 0
-    eta_str = f"{minutos_restantes:.0f} min  (≈{hh_eta:02d}:{mm_eta:02d})"
-    eta_delta = f"T→{_TEMP_CRITICA:.0f}°C a esa tasa"
+# ══════════════════════════════════════════════════════════════════════════════
+# FILA 3 — Banner de estado del sistema
+# ══════════════════════════════════════════════════════════════════════════════
+if temp > 32:
+    st.error("🚨 ALARMA CRÍTICA — T > 32 °C. Activar protocolo de emergencia.")
+    st.toast("🚨 ALARMA CRÍTICA: temperatura sobre 32 °C.", icon="🚨")
+elif temp > umbral:
+    st.warning(f"⚠️ Ventiladores ON — T = {temp:.2f} °C supera umbral de {umbral:.1f} °C.")
+    st.toast(f"⚠️ Temperatura {temp:.2f} °C > umbral {umbral:.1f} °C", icon="⚠️")
+elif abs(deriv) > 0.3:
+    signo = "+" if deriv > 0 else ""
+    st.warning(f"📈 Cambio rápido — dT/dt = {signo}{deriv:.4f} °C/min")
+    st.toast(f"📈 Tasa de cambio elevada: {signo}{deriv:.4f} °C/min", icon="📈")
 else:
-    eta_str  = None
-    eta_delta = None
-
-# ── Fila de estado: alerta principal + métrica ETA ──────────────────────────
-st.markdown("")
-col_alerta, col_eta = st.columns([3, 1])
-
-with col_alerta:
-    if temp > 32:
-        st.error("ALARMA CRÍTICA — T > 32°C. Activar protocolo de emergencia.")
-        st.toast("🚨 ALARMA CRÍTICA: temperatura sobre 32°C.", icon="🚨")
-    elif temp > umbral:
-        st.warning(f"Ventiladores ON — T={temp:.2f}°C supera umbral de {umbral:.1f}°C.")
-        st.toast(f"Temperatura {temp:.2f}°C > umbral {umbral:.1f}°C", icon="⚠️")
-    elif abs(deriv) > 0.3:
-        signo = "+" if deriv > 0 else ""
-        st.warning(f"Cambio rápido — dT/dt = {signo}{deriv:.4f} °C/min")
-        st.toast(f"Tasa de cambio elevada: {signo}{deriv:.4f} °C/min", icon="📈")
-    else:
-        st.success("Sistema en estado normal")
-
-with col_eta:
-    if eta_str is not None:
-        st.metric(
-            label="⏱ ETA → 30°C",
-            value=eta_str,
-            delta=eta_delta,
-            delta_color="inverse",
-        )
-    else:
-        if temp >= _TEMP_CRITICA:
-            st.metric(label="⏱ ETA → 30°C", value="Ya superado", delta="T≥ 30°C")
-        else:
-            st.metric(label="⏱ ETA → 30°C", value="Enfriando",
-                      delta="dT/dt ≤ 0", delta_color="off")
+    st.success("✔️ Sistema en estado normal")
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Gráfica principal interactiva (Plotly)
